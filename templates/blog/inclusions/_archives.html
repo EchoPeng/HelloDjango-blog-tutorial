@@ -1,0 +1,13 @@
+<div class="widget widget-archives">
+  <h3 class="widget-title">归档</h3>
+  <ul>
+    {% for date in date_list %}
+      <li>
+{#        由于 date_list 中的每个元素都是 Python 的 date 对象，所以可以引用 year 和 month 属性来获取年份和月份。#}
+        <a href="{% url 'blog:archive' date.year date.month %}">{{ date.year }} 年 {{ date.month }} 月</a>
+      </li>
+    {% empty %}
+      暂无归档！
+    {% endfor %}
+  </ul>
+</div>
