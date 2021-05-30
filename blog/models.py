@@ -4,7 +4,10 @@ from django.utils import timezone
 from django.urls import reverse
 import markdown
 from django.utils.html import strip_tags
-
+import re
+from markdown.extensions.toc import TocExtension
+from django.utils.text import slugify
+from django.utils.functional import cached_property
 
 # Create your models here.
 class Category(models.Model):
@@ -25,6 +28,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
 
 
 class Tag(models.Model):
@@ -82,6 +86,8 @@ class Post(models.Model):
     # 因为我们规定一篇文章只能有一个作者，而一个作者可能会写多篇文章，因此这是一对多的关联关系，和
     # Category 类似。
     author = models.ForeignKey(User, verbose_name='作者', on_delete=models.CASCADE)
+    # 新增 views 字段记录阅读量
+    views = models.PositiveIntegerField(default=0, editable=False)
 
     class Meta:
         verbose_name = '文章'
@@ -110,3 +116,33 @@ class Post(models.Model):
     # 记得从 django.urls 中导入 reverse 函数
     def get_absolute_url(self):
         return reverse('blog:detail', kwargs={'pk': self.pk})
+
+    def increase_views(self):
+        self.views += 1
+        self.save(update_fields=['views'])
+
+    # cached_property进一步提供缓存功能，它将被装饰方法调用返回的值缓存起来，
+    # 下次访问时将直接读取缓存内容，而不需重复执行方法获取返回结果
+    @cached_property
+    def rich_content(self):
+        return generate_rich_content(self.body)
+
+    @property
+    def toc(self):
+        return self.rich_content.get('toc', '')
+
+    @property
+    def body_html(self):
+        return self.rich_content.get('content', '')
+
+
+def generate_rich_content(value):
+    md = markdown.Markdown(extensions=[
+            'markdown.extensions.extra',
+            'markdown.extensions.codehilite',
+            TocExtension(slugify=slugify),
+        ])
+    content = md.convert(value)
+    m = re.search(r'<div class="toc">\s*<ul>(.*)</ul>\s*</div>', md.toc, re.S)
+    toc = m.group(1) if m is not None else ''
+    return {"content": content, "toc": toc}

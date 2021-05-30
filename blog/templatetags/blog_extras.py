@@ -1,5 +1,6 @@
 from django import template
 from ..models import Post, Category, Tag
+from django.db.models.aggregates import Count
 
 register = template.Library()
 
@@ -24,13 +25,18 @@ def show_archives(context):
 
 @register.inclusion_tag('blog/inclusions/_categories.html', takes_context=True)
 def show_categories(context):
+    # Count方法接收一个和Categoty相关联的模型参数名（这里是Post，通过ForeignKey关联的），
+    # 然后它便会统计Category记录的集合中每条记录下的与之关联的Post记录的行数，也就是文章数，
+    # 最后把这个值保存到num_posts属性中。
+    category_list = Category.objects.annotate(num_posts=Count('post')).filter(num_posts__gt=0)
     return {
-        'category_list': Category.objects.all()
+        'category_list': category_list
     }
 
 
 @register.inclusion_tag('blog/inclusions/_tags.html', takes_context=True)
 def show_tags(context):
+    tag_list = Tag.objects.annotate(num_posts=Count('post')).filter(num_posts__gt=0)
     return {
-        'tag_list': Tag.objects.all()
+        'tag_list': tag_list
     }

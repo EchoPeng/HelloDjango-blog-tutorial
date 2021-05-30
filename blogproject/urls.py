@@ -15,9 +15,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from blog.feeds import AllPostsRssFeed
+from rest_framework import routers
+from blog.views import PostViewSet
+
+
+router = routers.DefaultRouter()
+# django-rest-framework 的默认生成规则是 basename-action。
+# 例如这里 basename='post'，列出资源列表的 action 为 list，
+# 所以生成的获取文章资源列表的视图函数名为 post-list，使用 reverse('post-list') 就可以解析出获取文章资源列表的 API（URL）。
+router.register(r'posts', PostViewSet, basename='post')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('blog.urls')),
     path('', include('comments.urls')),
+    path('all/rss/', AllPostsRssFeed(), name='rss'),
+    path("api/", include(router.urls)),
+    path("api/auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

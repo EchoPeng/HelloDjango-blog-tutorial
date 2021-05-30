@@ -8,13 +8,15 @@ fabric = "*"
 coverage = "*"
 
 [packages]
-django = "~=2.2"
 markdown = "*"
 faker = "*"
 django-pure-pagination = "*"
 elasticsearch = ">=2,<3"
 django-haystack = "*"
 gunicorn = "*"
+django = "*"
+djangorestframework = "*"
+django-filter = "*"
 
 [requires]
 python_version = "3"
